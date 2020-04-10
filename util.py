@@ -35,11 +35,14 @@ class WitcherData:
         # fillna incase of missing string(np.nan = float), for filter step
         self.df = pd.read_csv(f'{filename}.csv', encoding='utf-8', sep='|', quoting=csv.QUOTE_NONE).fillna('')
 
-    def save_file(self, tag='', drop=False, index=False, header=False):
-        if drop:
-            self.df.drop(['Attribute', 'Count', 'Scene'], axis=1, inplace=True)
+    def save_file(self, tag='', export=False, index=False, header=False, mask_exp=''):
+        df = self.df
+        if mask_exp:
+            df = df[eval(mask_exp)]
+        if export:
+            df = df[['Audio', 'Content', 'Processed']]
         filename = f'{self.filename}_{tag}' if tag else self.filename
-        self.df.to_csv(f'{filename}.csv', encoding='utf-8', index=index, header=header, sep='|', quoting=csv.QUOTE_NONE)
+        df.to_csv(f'{filename}.csv', encoding='utf-8', index=index, header=header, sep='|', quoting=csv.QUOTE_NONE)
 
     def check_audio(self):
         self.df['Exist'] = self.df['Audio'].parallel_apply(
