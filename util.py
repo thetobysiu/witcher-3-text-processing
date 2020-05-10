@@ -1,4 +1,4 @@
-# SM4701 SIU KING WAI 54412743
+# SIU KING WAI SM4701 Deepstory
 import os
 import re
 import csv
@@ -7,7 +7,6 @@ import librosa
 import pandas as pd
 from pandarallel import pandarallel
 from nlp import tag_and_process
-pandarallel.initialize()
 
 
 def get_parameter():
@@ -21,9 +20,11 @@ def get_parameter():
 class WitcherData:
     wav_folder = ''  # The directory that contains the character wav files
 
-    def __init__(self, filename):
+    def __init__(self, filename, parallel=False):
         self.filename = os.path.splitext(filename)[0] if 'csv' in filename else filename
         self.df = pd.DataFrame()
+        if parallel:
+            pandarallel.initialize()
 
     @staticmethod
     def change_wav_folder(folder_name):
@@ -35,18 +36,26 @@ class WitcherData:
         # fillna incase of missing string(np.nan = float), for filter step
         self.df = pd.read_csv(f'{filename}.csv', encoding='utf-8', sep='|', quoting=csv.QUOTE_NONE).fillna('')
 
-    def save_file(self, tag='', export=False, index=False, header=False, mask_exp=''):
+    def save_file(self, tag='', export=False, index=False, header=False, mask_exp='', export_dir=''):
         df = self.df
         if mask_exp:
             df = df[eval(mask_exp)]
         if export:
             df = df[['Audio', 'Content', 'Processed']]
+        if export_dir:
+            export_dir = re.sub(r'\/$', '', export_dir) + '/'
         filename = f'{self.filename}_{tag}' if tag else self.filename
-        df.to_csv(f'{filename}.csv', encoding='utf-8', index=index, header=header, sep='|', quoting=csv.QUOTE_NONE)
+        df.to_csv(f'{export_dir}{filename}.csv', encoding='utf-8', index=index, header=header, sep='|', quoting=csv.QUOTE_NONE)
 
     def check_audio(self):
-        self.df['Exist'] = self.df['Audio'].parallel_apply(
+        self.df['Exist'] = self.df['Audio'].apply(
             lambda audio: os.path.isfile(f'{WitcherData.wav_folder}{self.filename}/{audio}.wav'))
+
+    def check_audio_from_df(self):
+        """ Used after trimming audio and need to verify again"""
+        audio_df = pd.read_csv(f'{self.filename}_audio_df.csv',
+                               encoding='utf-8', sep='|', quoting=csv.QUOTE_NONE).fillna('')
+        self.df['Exist'] = self.df['Audio'].isin(audio_df['name'])
 
     def get_audio_length(self):
         self.df['Duration'] = self.df['Audio'].parallel_apply(
@@ -82,7 +91,8 @@ class WitcherData:
             scenes = ['q401_06_04_reunion_part_02',
                       'q401_06_07_gmpl_finding_drunk_eskel',
                       'q401_06_08_found_drunk_eskel',
-                      'q401_06_09_calling_ida_drunk']
+                      'q401_06_09_calling_ida_drunk',
+                      'q602_17_wedding_finale']
             self.df = self.df[~self.df['Scene'].isin(scenes)]
 
     def filter_exist(self):

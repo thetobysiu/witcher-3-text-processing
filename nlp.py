@@ -1,4 +1,4 @@
-# SM4701 SIU KING WAI 54412743
+# SIU KING WAI SM4701 Deepstory
 from num2words import num2words
 from unidecode import unidecode
 import re
@@ -35,8 +35,8 @@ def tag_and_process(text):
         [r'\*(.+?)\*', ''],
         [r'^(\.\.\.|…)', ''],
         [r'"(\.\.\.|…)', '"'],
-        [r'(\.\.\.|…)$', '.'],
-        [r'(\.\.\.|…)"', '.'],
+        [r'(\.\.\.|…)$', ','],
+        [r'(\.\.\.|…)"', ','],
         [r'(\.\.\.|…)\?', '?'],
         [r'(\.\.\.|…)!', '!'],
         [r'\.\.\.|…', ', '],
